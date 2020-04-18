@@ -73,11 +73,17 @@ def find_move(request_data):
     my_snake = snake_list[0]
 
     possible_moves = get_possible_moves(possible_moves, board, my_snake)
-
+    print(possible_moves)
     my_snake = get_closest_food(food_list, my_snake)
     print(board)
-    closest_food = my_snake.closest_food
-    possible_moves = my_snake.move_towards_food(possible_moves)
+    food_moves = my_snake.move_towards_food(possible_moves)
+
+    for move in food_moves:
+        if(is_there_space(move, board, my_snake)):
+            possible_moves = food_moves
+        else:
+            if move in possible_moves:
+                possible_moves.remove(move)
 
     return possible_moves
 
@@ -116,7 +122,9 @@ def parse_snake_list(raw_snake_list, board):
 
         snake = Snake(
             snake_json["id"], snake_json["name"],
-            body, head, snake_length, snake_json["health"])
+            [SnakeSquare("B", square["x"], square["y"])
+             for square in body],
+            SnakeSquare("H", head["x"], head["y"]), snake_length, snake_json["health"])
 
         board.add_to_representation(
             snake.head.square_type, snake.head.x, snake.head.y)
@@ -160,6 +168,8 @@ def get_possible_moves(possible_moves, board, my_snake):
 
         if(my_snake.head.y == body_square.y):
             if((my_snake.head.x - body_square.x) == 1):
+                print(body_square)
+                print(my_snake.head)
                 print("Unable to go left")
                 if("left" in possible_moves):
                     possible_moves.remove("left")
@@ -169,6 +179,40 @@ def get_possible_moves(possible_moves, board, my_snake):
                     possible_moves.remove("right")
 
     return possible_moves
+
+
+def is_there_space(move, board, snake):
+    possible_moves = ["up", "down", "left", "right"]
+    # Creating a new space
+    new_snake = snake.next_move(move)
+
+    # Creating a new board and updating
+    board_next_turn = copy.deepcopy(board)
+    board_next_turn.add_to_representation(
+        new_snake.head.square_type, new_snake.head.x, new_snake.head.y)
+
+    for body_square in new_snake.body:
+        board_next_turn.add_to_representation(
+            body_square.square_type, body_square.x, body_square.y)
+
+    print(snake.body[len(snake.body)-1])
+    print(new_snake.body[len(snake.body)-1])
+    turn_to_empty = snake.body[len(snake.body)-1]
+    board_next_turn.add_to_representation(
+        " ", turn_to_empty.x, turn_to_empty.y)
+
+    # Checking if moves are possible
+    print(board_next_turn)
+
+    possible_moves_next_turn = get_possible_moves(
+        possible_moves, board_next_turn, new_snake)
+
+    print(possible_moves_next_turn)
+
+    if(len(possible_moves_next_turn) > 0):
+        return True
+    else:
+        return False
 
 
 if __name__ == "__main__":

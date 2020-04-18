@@ -1,13 +1,13 @@
 from SnakeSquare import SnakeSquare
+import copy
 
 
 class Snake:
     def __init__(self, snake_id, name, body, head, length, health):
         self.snake_id = snake_id
         self.name = name
-        self.body = [SnakeSquare("B", square["x"], square["y"])
-                     for square in body]
-        self.head = SnakeSquare("H", head["x"], head["y"])
+        self.body = body
+        self.head = head
         self.length = length
         self.health = health
         self.closest_food = None
@@ -17,6 +17,33 @@ class Snake:
 
     def __str__(self):
         return f"Snake: {self.name}, with a length of {self.length}"
+
+    def next_move(self, positional_move):
+        new_head = None
+        if(positional_move == "up"):
+            new_head = SnakeSquare(self.head.square_type,
+                                   self.head.x, self.head.y-1)
+        elif(positional_move == "down"):
+            new_head = SnakeSquare(self.head.square_type,
+                                   self.head.x, self.head.y + 1)
+        elif(positional_move == "right"):
+            new_head = SnakeSquare(self.head.square_type,
+                                   self.head.x+1, self.head.y)
+        elif(positional_move == "left"):
+            new_head = SnakeSquare(self.head.square_type,
+                                   self.head.x-1, self.head.y)
+
+        new_body = copy.deepcopy(self.body)
+        new_body.insert(0, SnakeSquare("B", self.head.x, self.head.y))
+        print("----")
+        for square in new_body:
+            print(square)
+        new_body.pop()
+        print("NEW BODY")
+        for square in new_body:
+            print(square)
+
+        return Snake(self.snake_id, self.name, new_body, new_head, len(new_body), self.health-1)
 
     def move_towards_food(self, possible_moves):
         closest_food = self.closest_food
