@@ -127,7 +127,16 @@ def get_correct_move(request_data):
         food_y = food["y"]
         food_x = food["x"]
         board[food_y][food_x] = "F"
-
+        food_snake_y_delta = int(food["y"]) - int(head["y"])
+        food_snake_x_delta = int(food['x']) - int(head["x"])
+        closest_food_snake_y_delta = int(closest_food["y"]) - int(head["y"])
+        closest_food_snake_x_delta = int(closest_food['x']) - int(head["x"])
+        sum_food_delta = abs(food_snake_y_delta) + abs(food_snake_x_delta)
+        sum_closest_food_delta = abs(
+            closest_food_snake_y_delta) + abs(closest_food_snake_x_delta)
+        if(sum_food_delta < sum_closest_food_delta):
+            print("closest food has changed")
+            closest_food = food
     print("Possible Moves", possible_moves)
 
     for row in board:
