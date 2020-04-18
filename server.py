@@ -1,7 +1,11 @@
 import os
 import random
-
+import copy
 import cherrypy
+from Board import Board
+from Food import Food
+from Snake import Snake
+from SnakeSquare import SnakeSquare
 
 """
 This is a simple Battlesnake server written in Python.
@@ -28,7 +32,6 @@ class Battlesnake(object):
         # cherrypy.request.json contains information about the game that"s about to be played.
         # TODO: Use this function to decide how your snake is going to look on the board.
         data = cherrypy.request.json
-        print_board_position(data)
         return {"color": "#1a75ff", "headType": "smile", "tailType": "fat-rattle"}
 
     @cherrypy.expose
@@ -39,8 +42,10 @@ class Battlesnake(object):
         # Valid moves are "up", "down", "left", or "right".
         # TODO: Use the information in cherrypy.request.json to decide your next move.
         data = cherrypy.request.json
+        print("REQUEST_DATA", data)
+        print("____________")
         print("Data regarding a move:")
-        possible_moves = get_correct_move(data)
+        possible_moves = find_move(data)
         print("_______________")
         # Choose a random direction to move in
         move = random.choice(possible_moves)
@@ -58,113 +63,110 @@ class Battlesnake(object):
         return "ok"
 
 
-def get_correct_move(request_data):
-    board_data = request_data["board"]
-    print("Board_Data", board_data)
-
+def find_move(request_data):
     possible_moves = ['up', 'down', 'left', 'right']
+    board = Board(request_data["board"]['height'],
+                  request_data["board"]["width"])
 
-    board = []
-    for row in range(0, board_data["height"]):
-        board.append([""] * board_data["width"])
+    food_list = parse_food_list(request_data["board"]["food"], board)
+    snake_list = parse_snake_list(request_data["board"]['snakes'], board)
+    my_snake = snake_list[0]
 
-    snake_data = request_data["board"]['snakes']
-    food_data = request_data["board"]["food"]
+    possible_moves = get_possible_moves(possible_moves, board, my_snake)
 
-    head = {}
+    my_snake = get_closest_food(food_list, my_snake)
+    print(board)
+    closest_food = my_snake.closest_food
+    possible_moves = my_snake.move_towards_food(possible_moves)
 
-    for snake in snake_data:
-        head = snake["body"][:1][0]
-        head_y = int(head["y"])
-        head_x = int(head["x"])
-        if(head_y == 0):
-            print("Unable to go up")
-            if("up" in possible_moves):
-                possible_moves.remove("up")
-        if(head_y == (board_data["height"] - 1)):
-            print("Unable to go down")
-            if("down" in possible_moves):
-                possible_moves.remove("down")
-        if(head_x == 0):
-            print("Unable to go left")
-            if("left" in possible_moves):
-                possible_moves.remove("left")
-        if(head_x == (board_data['width'] - 1)):
-            print("Unable to go right")
-            if("right" in possible_moves):
-                possible_moves.remove("right")
+    return possible_moves
 
-        board[head_y][head_x] = "H"
-        body = snake["body"][1:]
-        for body_square in body:
-            body_y = int(body_square["y"])
-            body_x = int(body_square["x"])
-            if(head_x == body_x):
-                if((head_y - body_y) == -1):
-                    print("Unable to go down")
-                    if("down" in possible_moves):
-                        possible_moves.remove("down")
-                if((head_y - body_y) == 1):
-                    print("Unable to go up")
-                    if("up" in possible_moves):
-                        possible_moves.remove("up")
 
-            if(head_y == body_y):
-                if((head_x - body_x) == 1):
-                    print("Unable to go left")
-                    if("left" in possible_moves):
-                        possible_moves.remove("left")
-                if((head_x - body_x) == -1):
-                    print("Unable to go right")
-                    if("right" in possible_moves):
-                        possible_moves.remove("right")
-
-            board[body_y][body_x] = "B"
-
-    closest_food = []
+def get_closest_food(food_data, snake):
+    if(len(food_data) == 1):
+        food_data[0].closest = True
+        snake.closest_food = food_data[0]
+        return snake
     closest_food = food_data[0]
     for food in food_data:
-        food_y = food["y"]
-        food_x = food["x"]
-        board[food_y][food_x] = "F"
-        food_snake_y_delta = int(food["y"]) - int(head["y"])
-        food_snake_x_delta = int(food['x']) - int(head["x"])
-        closest_food_snake_y_delta = int(closest_food["y"]) - int(head["y"])
-        closest_food_snake_x_delta = int(closest_food['x']) - int(head["x"])
-        sum_food_delta = abs(food_snake_y_delta) + abs(food_snake_x_delta)
-        sum_closest_food_delta = abs(
-            closest_food_snake_y_delta) + abs(closest_food_snake_x_delta)
-        if(sum_food_delta < sum_closest_food_delta):
-            print("closest food has changed")
+        if(food.sum_food_delta < closest_food.get_delta_sum):
             closest_food = food
-    print("Possible Moves", possible_moves)
 
-    for row in board:
-        print(row)
+    snake.closest_food = closest_food
 
-    food_snake_y_delta = int(closest_food["y"]) - int(head["y"])
-    food_snake_x_delta = int(closest_food['x']) - int(head["x"])
-    print(food_snake_y_delta)
-    print(food_snake_x_delta)
-    larger_delta = ""
-    if(abs(food_snake_x_delta) - abs(food_snake_y_delta) > 0):
-        larger_delta = "x"
-        if(food_snake_x_delta < 0 and "left" in possible_moves):
-            print("The only way to go is left")
-            return ["left"]
-        elif(food_snake_x_delta > 0 and "right" in possible_moves):
-            print("The only way to go is right")
-            return ["right"]
-    elif(abs(food_snake_x_delta) - abs(food_snake_y_delta) < 0):
-        larger_delta = "y"
-        if(food_snake_y_delta > 0 and "down" in possible_moves):
-            return ["down"]
-        elif(food_snake_y_delta < 0 and "up" in possible_moves):
-            print("The only way to go is up")
-            return ["up"]
-    else:
-        print("It doesn't really matter what way you go")
-        return possible_moves
+    return snake
+
+
+def parse_food_list(raw_food_list, board):
+    food_list = []
+    for json_food in raw_food_list:
+        new_food_object = Food(int(json_food["x"]), int(json_food['y']))
+        food_list.append(new_food_object)
+        board.add_to_representation("F", new_food_object.x, new_food_object.y)
+    return food_list
+
+
+def parse_snake_list(raw_snake_list, board):
+    snake_list = []
+    for snake_json in raw_snake_list:
+        head = snake_json["body"][:1][0]
+        body = snake_json["body"][1:]
+
+        snake_length = len(snake_json["body"])
+
+        snake = Snake(
+            snake_json["id"], snake_json["name"],
+            body, head, snake_length, snake_json["health"])
+
+        board.add_to_representation(
+            snake.head.square_type, snake.head.x, snake.head.y)
+        for body_square in snake.body:
+            board.add_to_representation(
+                body_square.square_type, body_square.x, body_square.y)
+
+        snake_list.append(snake)
+
+    return snake_list
+
+
+def get_possible_moves(possible_moves, board, my_snake):
+    if(my_snake.head.y == 0):
+        print("Unable to go up")
+        if("up" in possible_moves):
+            possible_moves.remove("up")
+    if(my_snake.head.y == (board.height - 1)):
+        print("Unable to go down")
+        if("down" in possible_moves):
+            possible_moves.remove("down")
+    if(my_snake.head.x == 0):
+        print("Unable to go left")
+        if("left" in possible_moves):
+            possible_moves.remove("left")
+    if(my_snake.head.x == (board.width - 1)):
+        print("Unable to go right")
+        if("right" in possible_moves):
+            possible_moves.remove("right")
+
+    for body_square in my_snake.body:
+        if(my_snake.head.x == body_square.x):
+            if((my_snake.head.y - body_square.y) == -1):
+                print("Unable to go down")
+                if("down" in possible_moves):
+                    possible_moves.remove("down")
+            if((my_snake.head.y - body_square.y) == 1):
+                print("Unable to go up")
+                if("up" in possible_moves):
+                    possible_moves.remove("up")
+
+        if(my_snake.head.y == body_square.y):
+            if((my_snake.head.x - body_square.x) == 1):
+                print("Unable to go left")
+                if("left" in possible_moves):
+                    possible_moves.remove("left")
+            if((my_snake.head.x - body_square.x) == -1):
+                print("Unable to go right")
+                if("right" in possible_moves):
+                    possible_moves.remove("right")
 
     return possible_moves
 
