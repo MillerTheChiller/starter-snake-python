@@ -29,7 +29,7 @@ class Battlesnake(object):
         # TODO: Use this function to decide how your snake is going to look on the board.
         data = cherrypy.request.json
         print("START")
-        return {"color": "#424242", "headType": "smile", "tailType": "fat-rattle"}
+        return {"color": "#1a75ff", "headType": "smile", "tailType": "fat-rattle"}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -39,7 +39,9 @@ class Battlesnake(object):
         # Valid moves are "up", "down", "left", or "right".
         # TODO: Use the information in cherrypy.request.json to decide your next move.
         data = cherrypy.request.json
-
+        print("Data regarding a move:")
+        print(data)
+        print("_______________")
         # Choose a random direction to move in
         possible_moves = ["up", "down", "left", "right"]
         move = random.choice(possible_moves)
@@ -61,7 +63,7 @@ if __name__ == "__main__":
     server = Battlesnake()
     cherrypy.config.update({"server.socket_host": "0.0.0.0"})
     cherrypy.config.update(
-        {"server.socket_port": int(os.environ.get("PORT", "8080")),}
+        {"server.socket_port": int(os.environ.get("PORT", "8080")), }
     )
     print("Starting Battlesnake Server...")
     cherrypy.quickstart(server)
