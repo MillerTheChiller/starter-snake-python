@@ -95,7 +95,7 @@ def get_closest_food(food_data, snake):
         return snake
     closest_food = food_data[0]
     for food in food_data:
-        if(food.get_delta_sum < closest_food.get_delta_sum):
+        if(food.get_delta_sum(snake.head) < closest_food.get_delta_sum(snake.head)):
             closest_food = food
 
     snake.closest_food = closest_food
