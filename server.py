@@ -25,25 +25,24 @@ class Battlesnake(object):
     @cherrypy.tools.json_out()
     def start(self):
         # This function is called everytime your snake is entered into a game.
-        # cherrypy.request.json contains information about the game that's about to be played.
+        # cherrypy.request.json contains information about the game that"s about to be played.
         # TODO: Use this function to decide how your snake is going to look on the board.
         data = cherrypy.request.json
-        print("START")
+        print_board_position(data)
         return {"color": "#1a75ff", "headType": "smile", "tailType": "fat-rattle"}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
     def move(self):
-        # This function is called on every turn of a game. It's how your snake decides where to move.
+        # This function is called on every turn of a game. It"s how your snake decides where to move.
         # Valid moves are "up", "down", "left", or "right".
         # TODO: Use the information in cherrypy.request.json to decide your next move.
         data = cherrypy.request.json
         print("Data regarding a move:")
-        print(data)
+        possible_moves = get_correct_move(data)
         print("_______________")
         # Choose a random direction to move in
-        possible_moves = ["up", "down", "left", "right"]
         move = random.choice(possible_moves)
 
         print(f"MOVE: {move}")
@@ -53,10 +52,86 @@ class Battlesnake(object):
     @cherrypy.tools.json_in()
     def end(self):
         # This function is called when a game your snake was in ends.
-        # It's purely for informational purposes, you don't have to make any decisions here.
+        # It"s purely for informational purposes, you don"t have to make any decisions here.
         data = cherrypy.request.json
         print("END")
         return "ok"
+
+
+def get_correct_move(request_data):
+    board_data = request_data["board"]
+    print("Board_Data", board_data)
+
+    possible_moves = ['up', 'down', 'left', 'right']
+
+    board = []
+    for row in range(0, board_data["height"]):
+        board.append([""] * board_data["width"])
+
+    snake_data = request_data["board"]['snakes']
+    food_data = request_data["board"]["food"]
+
+    head = {}
+
+    for snake in snake_data:
+        head = snake["body"][:1][0]
+        head_y = int(head["y"])
+        head_x = int(head["x"])
+        if(head_y == 0):
+            print("Unable to go up")
+            if("up" in possible_moves):
+                possible_moves.remove("up")
+        if(head_y == (board_data["height"] - 1)):
+            print("Unable to go down")
+            if("down" in possible_moves):
+                possible_moves.remove("down")
+        if(head_x == 0):
+            print("Unable to go left")
+            if("left" in possible_moves):
+                possible_moves.remove("left")
+        if(head_x == (board_data['width'] - 1)):
+            print("Unable to go right")
+            if("right" in possible_moves):
+                possible_moves.remove("right")
+
+        board[head_y][head_x] = "H"
+        body = snake["body"][1:]
+        for body_square in body:
+            body_y = int(body_square["y"])
+            body_x = int(body_square["x"])
+            if(head_x == body_x):
+                if((head_y - body_y) == -1):
+                    print("Unable to go down")
+                    if("down" in possible_moves):
+                        possible_moves.remove("down")
+                if((head_y - body_y) == 1):
+                    print("Unable to go up")
+                    if("up" in possible_moves):
+                        possible_moves.remove("up")
+
+            if(head_y == body_y):
+                if((head_x - body_x) == 1):
+                    print("Unable to go left")
+                    if("left" in possible_moves):
+                        possible_moves.remove("left")
+                if((head_x - body_x) == -1):
+                    print("Unable to go right")
+                    if("right" in possible_moves):
+                        possible_moves.remove("right")
+
+            board[body_y][body_x] = "B"
+
+    for food in food_data:
+        food_y = food["y"]
+        food_x = food["x"]
+        board[food_y][food_x] = "F"
+
+    print("Possible Moves", possible_moves)
+
+    for row in board:
+        print(row)
+
+    return possible_moves
 
 
 if __name__ == "__main__":
