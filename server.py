@@ -95,7 +95,7 @@ def get_closest_food(food_data, snake):
         return snake
     closest_food = food_data[0]
     for food in food_data:
-        if(food.sum_food_delta < closest_food.get_delta_sum):
+        if(food.get_delta_sum < closest_food.get_delta_sum):
             closest_food = food
 
     snake.closest_food = closest_food
@@ -195,8 +195,6 @@ def is_there_space(move, board, snake):
         board_next_turn.add_to_representation(
             body_square.square_type, body_square.x, body_square.y)
 
-    print(snake.body[len(snake.body)-1])
-    print(new_snake.body[len(snake.body)-1])
     turn_to_empty = snake.body[len(snake.body)-1]
     board_next_turn.add_to_representation(
         " ", turn_to_empty.x, turn_to_empty.y)
@@ -206,8 +204,6 @@ def is_there_space(move, board, snake):
 
     possible_moves_next_turn = get_possible_moves(
         possible_moves, board_next_turn, new_snake)
-
-    print(possible_moves_next_turn)
 
     if(len(possible_moves_next_turn) > 0):
         return True
