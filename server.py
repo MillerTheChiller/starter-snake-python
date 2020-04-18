@@ -121,6 +121,8 @@ def get_correct_move(request_data):
 
             board[body_y][body_x] = "B"
 
+    closest_food = []
+    closest_food = food_data[0]
     for food in food_data:
         food_y = food["y"]
         food_x = food["x"]
@@ -130,6 +132,30 @@ def get_correct_move(request_data):
 
     for row in board:
         print(row)
+
+    food_snake_y_delta = int(closest_food["y"]) - int(head["y"])
+    food_snake_x_delta = int(closest_food['x']) - int(head["x"])
+    print(food_snake_y_delta)
+    print(food_snake_x_delta)
+    larger_delta = ""
+    if(abs(food_snake_x_delta) - abs(food_snake_y_delta) > 0):
+        larger_delta = "x"
+        if(food_snake_x_delta < 0 and "left" in possible_moves):
+            print("The only way to go is left")
+            return ["left"]
+        elif(food_snake_x_delta > 0 and "right" in possible_moves):
+            print("The only way to go is right")
+            return ["right"]
+    elif(abs(food_snake_x_delta) - abs(food_snake_y_delta) < 0):
+        larger_delta = "y"
+        if(food_snake_y_delta > 0 and "down" in possible_moves):
+            return ["down"]
+        elif(food_snake_y_delta < 0 and "up" in possible_moves):
+            print("The only way to go is up")
+            return ["up"]
+    else:
+        print("It doesn't really matter what way you go")
+        return possible_moves
 
     return possible_moves
 
