@@ -35,13 +35,7 @@ class Snake:
 
         new_body = copy.deepcopy(self.body)
         new_body.insert(0, SnakeSquare("B", self.head.x, self.head.y))
-        print("----")
-        for square in new_body:
-            print(square)
         new_body.pop()
-        print("NEW BODY")
-        for square in new_body:
-            print(square)
 
         return Snake(self.snake_id, self.name, new_body, new_head, len(new_body), self.health-1)
 

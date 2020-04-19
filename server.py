@@ -69,7 +69,8 @@ def find_move(request_data):
                   request_data["board"]["width"])
 
     food_list = parse_food_list(request_data["board"]["food"], board)
-    snake_list = parse_snake_list(request_data["board"]['snakes'], board)
+    snake_list = parse_snake_list(
+        request_data["board"]['snakes'], request_data["you"], board)
     my_snake = snake_list[0]
 
     possible_moves = get_possible_moves(possible_moves, board, my_snake)
@@ -79,9 +80,14 @@ def find_move(request_data):
     food_moves = my_snake.move_towards_food(possible_moves)
 
     for move in food_moves:
-        if(is_there_space(move, board, my_snake)):
+        is_possible = is_there_space(move, board, my_snake, 34)
+
+        print("Was there enough space?", is_possible)
+        if(is_possible):
+            print("It was possible!")
             possible_moves = food_moves
         else:
+            print("It was not possible!!")
             if move in possible_moves:
                 possible_moves.remove(move)
 
@@ -112,8 +118,9 @@ def parse_food_list(raw_food_list, board):
     return food_list
 
 
-def parse_snake_list(raw_snake_list, board):
+def parse_snake_list(raw_snake_list, my_snake, board):
     snake_list = []
+    raw_snake_list.insert(0, my_snake)
     for snake_json in raw_snake_list:
         head = snake_json["body"][:1][0]
         body = snake_json["body"][1:]
@@ -168,8 +175,6 @@ def get_possible_moves(possible_moves, board, my_snake):
 
         if(my_snake.head.y == body_square.y):
             if((my_snake.head.x - body_square.x) == 1):
-                print(body_square)
-                print(my_snake.head)
                 print("Unable to go left")
                 if("left" in possible_moves):
                     possible_moves.remove("left")
@@ -181,34 +186,42 @@ def get_possible_moves(possible_moves, board, my_snake):
     return possible_moves
 
 
-def is_there_space(move, board, snake):
-    possible_moves = ["up", "down", "left", "right"]
-    # Creating a new space
-    new_snake = snake.next_move(move)
-
-    # Creating a new board and updating
-    board_next_turn = copy.deepcopy(board)
-    board_next_turn.add_to_representation(
-        new_snake.head.square_type, new_snake.head.x, new_snake.head.y)
-
-    for body_square in new_snake.body:
-        board_next_turn.add_to_representation(
-            body_square.square_type, body_square.x, body_square.y)
-
-    turn_to_empty = snake.body[len(snake.body)-1]
-    board_next_turn.add_to_representation(
-        " ", turn_to_empty.x, turn_to_empty.y)
-
-    # Checking if moves are possible
-    print(board_next_turn)
-
-    possible_moves_next_turn = get_possible_moves(
-        possible_moves, board_next_turn, new_snake)
-
-    if(len(possible_moves_next_turn) > 0):
+def is_there_space(move, board, snake, space_needed):
+    print("Space still needed", space_needed)
+    if(space_needed == 0):
+        print("Returning true!!")
         return True
     else:
-        return False
+        possible_moves = ["up", "down", "left", "right"]
+        # Creating a new space
+        new_snake = snake.next_move(move)
+
+        # Creating a new board and updating
+        board_next_turn = copy.deepcopy(board)
+        board_next_turn.add_to_representation(
+            new_snake.head.square_type, new_snake.head.x, new_snake.head.y)
+
+        for body_square in new_snake.body:
+            board_next_turn.add_to_representation(
+                body_square.square_type, body_square.x, body_square.y)
+
+        turn_to_empty = snake.body[len(snake.body)-1]
+        board_next_turn.add_to_representation(
+            " ", turn_to_empty.x, turn_to_empty.y)
+
+        # Checking if moves are possible
+        print(board_next_turn)
+
+        possible_moves_next_turn = get_possible_moves(
+            possible_moves, board_next_turn, new_snake)
+
+        if(len(possible_moves_next_turn) > 0):
+            for new_move in possible_moves_next_turn:
+                return is_there_space(new_move, board_next_turn,
+                                      new_snake, space_needed-1)
+        else:
+            print("Returning False!")
+            return False
 
 
 if __name__ == "__main__":
