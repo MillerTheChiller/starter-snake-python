@@ -80,7 +80,7 @@ def find_move(request_data):
     food_moves = my_snake.move_towards_food(possible_moves)
 
     for move in food_moves:
-        is_possible = is_there_space(move, board, my_snake, 4)
+        is_possible = is_there_space(move, board, my_snake, my_snake.length)
 
         print("Was there enough space?", is_possible)
         if(is_possible):
