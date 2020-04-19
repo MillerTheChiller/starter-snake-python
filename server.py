@@ -91,6 +91,9 @@ def find_move(request_data):
             if move in possible_moves:
                 possible_moves.remove(move)
 
+    print("possible_moves", possible_moves)
+    if(len(possible_moves) == 0):
+        return ["up"]
     return possible_moves
 
 
@@ -120,24 +123,28 @@ def parse_food_list(raw_food_list, board):
 
 def parse_snake_list(raw_snake_list, my_snake, board):
     snake_list = []
-    raw_snake_list.insert(0, my_snake)
+    raw_snake_list = [my_snake]
     for snake_json in raw_snake_list:
         head = snake_json["body"][:1][0]
         body = snake_json["body"][1:]
-
+        tail = body.pop()
         snake_length = len(snake_json["body"])
 
         snake = Snake(
             snake_json["id"], snake_json["name"],
             [SnakeSquare("B", square["x"], square["y"])
              for square in body],
-            SnakeSquare("H", head["x"], head["y"]), snake_length, snake_json["health"])
+            SnakeSquare("H", head["x"], head["y"]),
+            SnakeSquare("T", tail["x"], tail["y"]),
+            snake_length, snake_json["health"])
 
         board.add_to_representation(
             snake.head.square_type, snake.head.x, snake.head.y)
         for body_square in snake.body:
             board.add_to_representation(
                 body_square.square_type, body_square.x, body_square.y)
+        board.add_to_representation(
+            snake.tail.square_type, snake.tail.x, snake.tail.y)
 
         snake_list.append(snake)
 
@@ -193,19 +200,23 @@ def is_there_space(move, board, snake, space_needed):
         possible_moves = ["up", "down", "left", "right"]
         # Creating a new space
         new_snake = snake.next_move(move)
-
         # Creating a new board and updating
         board_next_turn = copy.deepcopy(board)
+
+        board_next_turn.add_to_representation(
+            new_snake.tail.square_type, new_snake.tail.x, new_snake.tail.y)
+
         board_next_turn.add_to_representation(
             new_snake.head.square_type, new_snake.head.x, new_snake.head.y)
 
         for body_square in new_snake.body:
             board_next_turn.add_to_representation(
                 body_square.square_type, body_square.x, body_square.y)
-
-        turn_to_empty = snake.body[len(snake.body)-1]
-        board_next_turn.add_to_representation(
-            " ", turn_to_empty.x, turn_to_empty.y)
+        # When a food is eaten the last piece of the snake is appended by one
+        # but is an exact x/y replica of the latest element in the list.
+        if(not snake.tail == new_snake.tail and not snake.tail == new_snake.head):
+            board_next_turn.add_to_representation(
+                " ", snake.tail.x, snake.tail.y)
 
         # Checking if moves are possible
 

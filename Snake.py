@@ -3,11 +3,12 @@ import copy
 
 
 class Snake:
-    def __init__(self, snake_id, name, body, head, length, health):
+    def __init__(self, snake_id, name, body, head, tail, length, health):
         self.snake_id = snake_id
         self.name = name
-        self.body = body
         self.head = head
+        self.body = body
+        self.tail = tail
         self.length = length
         self.health = health
         self.closest_food = None
@@ -35,9 +36,10 @@ class Snake:
 
         new_body = copy.deepcopy(self.body)
         new_body.insert(0, SnakeSquare("B", self.head.x, self.head.y))
-        new_body.pop()
+        new_tail = new_body.pop()
+        new_tail.square_type = "T"
 
-        return Snake(self.snake_id, self.name, new_body, new_head, len(new_body), self.health-1)
+        return Snake(self.snake_id, self.name, new_body, new_head, new_tail, len(new_body), self.health-1)
 
     def move_towards_food(self, possible_moves):
         closest_food = self.closest_food
