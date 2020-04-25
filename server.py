@@ -33,7 +33,7 @@ class Battlesnake(object):
         # cherrypy.request.json contains information about the game that"s about to be played.
         # TODO: Use this function to decide how your snake is going to look on the board.
         data = cherrypy.request.json
-        return {"color": "#565656", "headType": "safe", "tailType": "round-bum"}
+        return {"color": "#565656", "headType": "shac-workout", "tailType": "round-bum"}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
@@ -78,9 +78,14 @@ def find_move(request_data):
         request_data["board"]['snakes'], request_data["you"], board)
 
     print(request_data['you'])
+    print(board)
     # Removes the snake from request_data["you"] from the snake_list parsed.
     snake_list.remove(my_snake)
+    print("SNAKE LIST=")
+    print(snake_list)
 
+    if (len(snake_list) == 1):
+        print("One on one mode")
     # Get possible moves in the immediate next step
     move_set = get_possible_moves(move_set, board, my_snake)
 
@@ -172,7 +177,6 @@ def parse_snake(snake_json, board):
         snake_length, snake_json["health"])
 
     # This is for logging
-    '''
     board.add_to_representation(
         snake.head.square_type, snake.head.x, snake.head.y)
     for body_square in snake.body:
@@ -180,7 +184,6 @@ def parse_snake(snake_json, board):
             body_square.square_type, body_square.x, body_square.y)
     board.add_to_representation(
         snake.tail.square_type, snake.tail.x, snake.tail.y)
-    '''
     return snake
 
 
