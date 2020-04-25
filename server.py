@@ -33,7 +33,7 @@ class Battlesnake(object):
         # cherrypy.request.json contains information about the game that"s about to be played.
         # TODO: Use this function to decide how your snake is going to look on the board.
         data = cherrypy.request.json
-        return {"color": "#1a75ff", "headType": "safe", "tailType": "round-bum"}
+        return {"color": "#565656", "headType": "safe", "tailType": "round-bum"}
 
     @cherrypy.expose
     @cherrypy.tools.json_in()
